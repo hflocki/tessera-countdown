@@ -1,0 +1,31 @@
+# What tools/preview.py shows (docs/PREVIEW.md). The pictures come from motifs/, never from the internet.
+tiles:
+  - tile: countdown
+    name: Christmas
+    sizes: [2x1, 1x1, 2x2, 1x2, 4x3]
+  - tile: countdown
+    name: Holidays
+    options: { event: entity, entity: calendar.family, what: Holidays }
+    sizes: [2x1]
+  - tile: countdown
+    name: Birthday
+    options: { event: date, date: "{now+9d}", motif: birthday }
+    sizes: [2x1]
+
+states:
+  calendar.family:
+    state: "off"
+    attributes: { friendly_name: Family, message: Summer holidays, start_time: "{now+20d}" }
+
+pictures:
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/christmas.png": motifs/christmas.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/advent.png": motifs/advent.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/new_year.png": motifs/new_year.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/easter.png": motifs/easter.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/spring.png": motifs/spring.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/summer.png": motifs/summer.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/autumn.png": motifs/autumn.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/halloween.png": motifs/halloween.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/winter.png": motifs/winter.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/birthday.png": motifs/birthday.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/travel.png": motifs/travel.png

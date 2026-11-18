@@ -1,0 +1,354 @@
+#include "countdown.h"
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <string>
+
+namespace esphome::countdown {
+
+using tessera::Font;
+namespace ui = tessera::ui;
+
+// ---- Days and dates -----------------------------------------------------------------------------------------------
+
+// Days since 1970-01-01 for a date (Howard Hinnant's days_from_civil): the difference of two of these is whole days.
+static int32_t civil(int y, int m, int d) {
+  y -= m <= 2;
+  const int era = (y >= 0 ? y : y - 399) / 400;
+  const unsigned yoe = static_cast<unsigned>(y - era * 400);
+  const unsigned doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;
+  return era * 146097 + static_cast<int32_t>(yoe * 365 + yoe / 4 - yoe / 100 + doy) - 719468;
+}
+
+// The month and day of a day number (Howard Hinnant's civil_from_days).
+static void from_civil(int32_t z, int &y, int &m, int &d) {
+  z += 719468;
+  const int era = (z >= 0 ? z : z - 146096) / 146097;
+  const unsigned doe = static_cast<unsigned>(z - era * 146097);
+  const unsigned yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+  const unsigned doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+  const unsigned mp = (5 * doy + 2) / 153;
+  d = static_cast<int>(doy - (153 * mp + 2) / 5 + 1);
+  m = static_cast<int>(mp < 10 ? mp + 3 : mp - 9);
+  y = static_cast<int>(yoe) + era * 400 + (m <= 2);
+}
+
+// Easter Sunday of a year (the anonymous Gregorian algorithm), as a day number.
+static int32_t easter(int y) {
+  const int a = y % 19, b = y / 100, c = y % 100, d = b / 4, e = b % 4, f = (b + 8) / 25, g = (b - f + 1) / 3;
+  const int h = (19 * a + b - d - g + 15) % 30, i = c / 4, k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const int m = (a + 11 * h + 22 * l) / 451, month = (h + l - 7 * m + 114) / 31, day = (h + l - 7 * m + 114) % 31 + 1;
+  return civil(y, month, day);
+}
+
+// The first Sunday of Advent: four Sundays before Christmas, the fourth the Sunday on or before 24 December.
+static int32_t advent(int y) {
+  const int32_t eve = civil(y, 12, 24);
+  const int weekday = ((eve + 4) % 7 + 7) % 7;  // 0 Sunday: 1 January 1970 was a Thursday
+  return eve - weekday - 21;
+}
+
+// The next day of a yearly date from `today` on: this year's, or next year's once it has passed.
+static int32_t next_yearly(int32_t today, int year, int month, int day) {
+  const int32_t d = civil(year, month, day);
+  return d >= today ? d : civil(year + 1, month, day);
+}
+static int32_t next_of(int32_t today, int year, int32_t (*of)(int)) {
+  const int32_t d = of(year);
+  return d >= today ? d : of(year + 1);
+}
+
+// A date a person typed: "24.12." or "12-24" every year, "2027-05-01" or "1.5.2027" once. False for anything else.
+static bool parse_date(const char *text, int &y, int &m, int &d) {
+  y = 0;
+  int a = 0, b = 0, c = 0;
+  if (sscanf(text, "%d-%d-%d", &a, &b, &c) == 3 && a > 31) y = a, m = b, d = c;
+  else if (sscanf(text, "%d.%d.%d", &a, &b, &c) == 3 && c > 31) d = a, m = b, y = c;
+  else if (sscanf(text, "%d.%d", &a, &b) == 2) d = a, m = b;
+  else if (sscanf(text, "%d-%d", &a, &b) == 2) m = a, d = b;
+  else return false;
+  return m >= 1 && m <= 12 && d >= 1 && d <= 31;
+}
+
+// A moment as Home Assistant writes a state: "2026-12-24", "2026-12-24 18:00:00" (local, an input_datetime) or
+// "2026-12-24T17:00:00+00:00" (a timestamp sensor). Gives the local day, and the moment when it has a time.
+static bool parse_state(const std::string &s, int32_t &day, uint32_t &at) {
+  int y, mo, d, h = -1, mi = 0, sec = 0;
+  if (sscanf(s.c_str(), "%4d-%2d-%2d", &y, &mo, &d) != 3 || mo < 1 || mo > 12 || d < 1 || d > 31) return false;
+  at = 0;
+  if (s.size() >= 16) sscanf(s.c_str() + 11, "%2d:%2d:%2d", &h, &mi, &sec);
+  const size_t zone = s.size() > 19 ? s.find_first_of("+-Z", 19) : std::string::npos;
+  if (h >= 0 && zone != std::string::npos) {
+    // A moment with its zone: its local day is the screen's.
+    long offset = 0;
+    if (s[zone] != 'Z') {
+      int oh = 0, om = 0;
+      sscanf(s.c_str() + zone + 1, "%2d:%2d", &oh, &om);
+      offset = (oh * 60L + om) * 60L * (s[zone] == '-' ? -1 : 1);
+    }
+    const long long t = static_cast<long long>(civil(y, mo, d)) * 86400 + h * 3600 + mi * 60 + sec - offset;
+    if (t <= 0) return false;
+    at = static_cast<uint32_t>(t);
+    const tessera::LocalTime lt = tessera::local_time(at);
+    day = civil(lt.year, lt.month, lt.day);
+    return true;
+  }
+  day = civil(y, mo, d);
+  if (h > 0 || mi > 0) at = 1;  // a local time of day: shown as such on the day, never compared
+  return true;
+}
+
+// ---- What to count down to ----------------------------------------------------------------------------------------
+
+enum class Kind : uint8_t { CHRISTMAS, NEW_YEARS_EVE, EASTER, ADVENT, HALLOWEEN, SUMMER, DATE, ENTITY, NONE };
+
+// The kinds a person can choose, by their value in the manifest.
+static Kind kind_of(const char *v, bool &automatic) {
+  automatic = strcmp(v, "auto") == 0;
+  if (strcmp(v, "christmas") == 0) return Kind::CHRISTMAS;
+  if (strcmp(v, "new_years_eve") == 0) return Kind::NEW_YEARS_EVE;
+  if (strcmp(v, "easter") == 0) return Kind::EASTER;
+  if (strcmp(v, "advent") == 0) return Kind::ADVENT;
+  if (strcmp(v, "halloween") == 0) return Kind::HALLOWEEN;
+  if (strcmp(v, "summer") == 0) return Kind::SUMMER;
+  if (strcmp(v, "date") == 0) return Kind::DATE;
+  if (strcmp(v, "entity") == 0) return Kind::ENTITY;
+  return Kind::CHRISTMAS;
+}
+
+// The text key of a holiday: "christmas" for "until Christmas", "christmas_today" on the day.
+static const char *key_of(Kind k) {
+  switch (k) {
+    case Kind::CHRISTMAS: return "christmas";
+    case Kind::NEW_YEARS_EVE: return "new_years_eve";
+    case Kind::EASTER: return "easter";
+    case Kind::ADVENT: return "advent";
+    case Kind::HALLOWEEN: return "halloween";
+    case Kind::SUMMER: return "summer";
+    default: return nullptr;
+  }
+}
+
+// The day of a holiday from `today` on.
+static int32_t holiday(Kind k, int32_t today, int year) {
+  switch (k) {
+    case Kind::CHRISTMAS: return next_yearly(today, year, 12, 24);
+    case Kind::NEW_YEARS_EVE: return next_yearly(today, year, 12, 31);
+    case Kind::EASTER: return next_of(today, year, easter);
+    case Kind::ADVENT: return next_of(today, year, advent);
+    case Kind::HALLOWEEN: return next_yearly(today, year, 10, 31);
+    case Kind::SUMMER: return next_yearly(today, year, 6, 21);
+    default: return today;
+  }
+}
+
+// The picture of a holiday, or of the season of a day.
+static const char *motif_of(Kind k, int32_t day) {
+  switch (k) {
+    case Kind::CHRISTMAS: return "christmas";
+    case Kind::NEW_YEARS_EVE: return "new_year";
+    case Kind::EASTER: return "easter";
+    case Kind::ADVENT: return "advent";
+    case Kind::HALLOWEEN: return "halloween";
+    case Kind::SUMMER: return "summer";
+    default: break;
+  }
+  int y, m, d;
+  from_civil(day, y, m, d);
+  if (m == 12 && d >= 20 && d <= 26) return "christmas";
+  if ((m == 12 && d >= 30) || (m == 1 && d == 1)) return "new_year";
+  if (m == 10 && d == 31) return "halloween";
+  if (m == 12 || m <= 2) return "winter";
+  if (m <= 5) return "spring";
+  if (m <= 8) return "summer";
+  return "autumn";
+}
+
+static std::string motif_url(const char *motif) {
+  return std::string("https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/") + motif + ".png";
+}
+
+// ---- The tile -----------------------------------------------------------------------------------------------------
+
+// A picture of the season beside or above the number of days, and what they count to. On the day itself the
+// holiday's wish ("Merry Christmas") instead of the number, or the time of a calendar's event.
+class CountdownTile : public tessera::Tile {
+ public:
+  explicit CountdownTile(const tessera::Plugin *plugin) : plugin_(plugin) {}
+
+  void create(const tessera::TileContext &c) override {
+    width_ = c.width;
+    height_ = c.height;
+    kind_ = kind_of(c.options["event"] | "auto", auto_);
+    has_date_ = parse_date(c.options["date"] | "", year_, month_, day_);
+    snprintf(what_, sizeof what_, "%s", c.options["what"] | "");
+    snprintf(entity_, sizeof entity_, "%s", c.options["entity"] | "");
+    snprintf(motif_, sizeof motif_, "%s", c.options["motif"] | "auto");
+
+    const int gap = ui::px(ui::large() ? 12 : 8);
+    const int number_h = ui::line_height(Font::DIGITS), body_h = ui::line_height(Font::BODY);
+    const int text_need = number_h + 3 * body_h;
+    const bool picture = ui::pictures() && strcmp(motif_, "none") != 0 && (c.columns >= 2 || c.rows >= 2);
+    // Beside the words where the tile is wide, above them where it is tall.
+    x0_ = 0, y0_ = 0, w_ = width_, h_ = height_;
+    if (picture && width_ - std::min(height_, width_ / 2) >= ui::mm(22)) {
+      const int side = std::min(height_, width_ / 2);
+      place_ = ui::picture(c.parent);
+      lv_obj_set_size(place_, side, side);
+      lv_obj_set_pos(place_, 0, (height_ - side) / 2);
+      x0_ = side + gap;
+      w_ = width_ - x0_;
+    } else if (picture && height_ - text_need - gap >= ui::mm(14)) {
+      const int ph = height_ - text_need - gap;
+      place_ = ui::picture(c.parent);
+      lv_obj_set_size(place_, width_, ph);
+      lv_obj_set_pos(place_, 0, 0);
+      y0_ = ph + gap;
+      h_ = height_ - y0_;
+    }
+
+    number_ = ui::label(c.parent, Font::DIGITS, theme::INK);
+    lv_obj_set_style_text_align(number_, LV_TEXT_ALIGN_CENTER, 0);
+    words_ = ui::text(c.parent, Font::BODY, theme::INK_SOFT);
+    lv_obj_set_style_text_align(words_, LV_TEXT_ALIGN_CENTER, 0);
+    date_ = ui::label(c.parent, Font::BODY, theme::MUTED);
+    lv_obj_set_style_text_align(date_, LV_TEXT_ALIGN_CENTER, 0);
+  }
+
+  void on_state(JsonObjectConst data) override {
+    // The chosen calendar or entity: a calendar's next event (start_time, message), else the state as a date.
+    has_entity_ = false;
+    JsonObjectConst e = data["entities"]["entity"];
+    if (kind_ != Kind::ENTITY || e.isNull()) return;
+    const std::string state = e["state"] | "";
+    snprintf(entity_name_, sizeof entity_name_, "%s", e["name"] | "");
+    entity_at_ = 0;
+    if (strncmp(entity_, "calendar.", 9) == 0) {
+      const uint32_t start = e["attributes"]["start_time"] | 0u;
+      const char *message = e["attributes"]["message"] | "";
+      if (start) {
+        const tessera::LocalTime lt = tessera::local_time(start);
+        entity_day_ = civil(lt.year, lt.month, lt.day);
+        entity_at_ = lt.hour || lt.minute ? start : 0;
+        if (*message) snprintf(entity_name_, sizeof entity_name_, "%s", message);
+        has_entity_ = true;
+      }
+    } else {
+      has_entity_ = parse_state(state, entity_day_, entity_at_);
+    }
+  }
+
+  void on_tick(uint32_t now) override {
+    if (!now) return;  // the screen's clock is not set yet
+    const tessera::LocalTime lt = tessera::local_time(now);
+    const int32_t today = civil(lt.year, lt.month, lt.day);
+
+    // What it counts to now: its day, its kind and, for a calendar's event, its moment.
+    Kind kind = kind_;
+    int32_t day = today;
+    uint32_t at = 0;
+    bool known = true;
+    if (auto_) {
+      day = INT32_MAX;
+      for (Kind k : {Kind::CHRISTMAS, Kind::NEW_YEARS_EVE, Kind::EASTER}) {
+        const int32_t d = holiday(k, today, lt.year);
+        if (d < day) day = d, kind = k;
+      }
+    } else if (kind_ == Kind::DATE) {
+      known = has_date_;
+      if (known) day = year_ ? civil(year_, month_, day_) : next_yearly(today, lt.year, month_, day_);
+    } else if (kind_ == Kind::ENTITY) {
+      known = has_entity_;
+      day = entity_day_;
+      at = entity_at_ > 1 ? entity_at_ : 0;
+    } else {
+      day = holiday(kind_, today, lt.year);
+    }
+    const int32_t left = day - today;
+
+    std::string number, words, date;
+    if (!known) {
+      words = plugin_->text(kind_ == Kind::DATE ? "no_date" : "no_entity");
+    } else {
+      const char *key = key_of(kind);
+      const std::string name = *what_ ? std::string(what_) : kind == Kind::ENTITY && *entity_name_ ? entity_name_ : "";
+      // "until Christmas", "until Holidays"; on the day the holiday's wish or the name.
+      std::string until = key && !*what_ ? plugin_->text(key)
+                          : tessera::fill(plugin_->text("until"), "what", name.empty() ? plugin_->text("event") : name);
+      if (left > 0) {
+        number = std::to_string(left);
+        words = tessera::format(plugin_->text("days"), left) + " " + until;
+        // Noon of that day, so a change of summer time never moves it to another date.
+        const uint32_t noon = now - (lt.hour * 3600 + lt.minute * 60 + lt.second) + 12 * 3600 + left * 86400;
+        date = tessera::date_text(noon);
+      } else if (left == 0) {
+        number = "";
+        words = key && !*what_ ? plugin_->text((std::string(key) + "_today").c_str())
+                : name.empty() ? std::string(plugin_->text("today")) : name;
+        date = at ? tessera::fill(plugin_->text("at"), "time", tessera::clock_text(at)) : plugin_->text("today");
+      } else {
+        words = name.empty() ? std::string(plugin_->text("event")) : name;
+        date = plugin_->text("passed");
+      }
+    }
+    paint(number, words, date);
+
+    if (place_) {
+      const char *m = strcmp(motif_, "auto") == 0 ? motif_of(kind, day) : motif_;
+      ui::set_picture(place_, motif_url(m), tessera::Fit::COVER);
+    }
+  }
+
+  void on_theme() override {
+    ui::set_color(number_, theme::INK);
+    ui::set_color(words_, theme::INK_SOFT);
+    ui::set_color(date_, theme::MUTED);
+  }
+
+ private:
+  // The number, the words and the date, together in the middle of the room for words; the date only where it fits.
+  void paint(const std::string &number, const std::string &words, const std::string &date) {
+    Font face = Font::DIGITS;
+    if (!number.empty() && (!ui::covers(number, Font::DIGITS) || ui::text_width(number, Font::DIGITS) > w_))
+      face = Font::VALUE;
+    const int body_h = ui::line_height(Font::BODY);
+    const int nh = number.empty() ? 0 : ui::line_height(face);
+    // On the day the words are the headline.
+    const Font words_font = number.empty() ? Font::TITLE : Font::BODY;
+    const int line = ui::line_height(words_font);
+    const int lines = ui::text_width(words, words_font) > w_ ? 2 : 1;
+    int wh = lines * line;
+    int dh = date.empty() ? 0 : body_h;
+    if (nh + wh + dh > h_) dh = 0;
+    if (nh + wh > h_) wh = line;
+    const int top = y0_ + std::max(0, (h_ - nh - wh - dh) / 2);
+    ui::set_font(number_, face);
+    ui::set_text(number_, number);
+    lv_obj_set_size(number_, w_, std::max(1, nh));
+    lv_obj_set_pos(number_, x0_, top);
+    ui::set_font(words_, words_font);
+    ui::set_text(words_, words);
+    ui::set_color(words_, number.empty() ? theme::INK : theme::INK_SOFT);
+    lv_obj_set_size(words_, w_, std::max(1, wh));
+    lv_obj_set_pos(words_, x0_, top + nh);
+    ui::set_text(date_, dh ? date : "");
+    lv_obj_set_size(date_, w_, std::max(1, dh ? dh : body_h));
+    lv_obj_set_pos(date_, x0_, top + nh + wh);
+  }
+
+  const tessera::Plugin *plugin_;
+  int width_ = 0, height_ = 0, x0_ = 0, y0_ = 0, w_ = 0, h_ = 0;
+  Kind kind_ = Kind::CHRISTMAS;
+  bool auto_ = true, has_date_ = false, has_entity_ = false;
+  int year_ = 0, month_ = 0, day_ = 0;
+  int32_t entity_day_ = 0;
+  uint32_t entity_at_ = 0;
+  char what_[65]{}, entity_[96]{}, entity_name_[65]{}, motif_[16]{};
+  lv_obj_t *place_{}, *number_{}, *words_{}, *date_{};
+};
+
+void Countdown::setup() {
+  add_tile("countdown", [this]() { return new CountdownTile(this); });
+}
+
+}  // namespace esphome::countdown
