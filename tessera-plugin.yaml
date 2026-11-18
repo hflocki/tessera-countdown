@@ -32,13 +32,13 @@ tiles:
     pictures: 1
     example: tile_example
     options:
+      - { id: auto, kind: toggle, default: true, label: auto, hint: auto_hint }
       - id: event
         kind: choice
-        default: auto
+        default: christmas
         label: event
         hint: event_hint
         choices:
-          - { value: auto, label: event_auto }
           - { value: christmas, label: event_christmas }
           - { value: new_years_eve, label: event_new_years_eve }
           - { value: easter, label: event_easter }

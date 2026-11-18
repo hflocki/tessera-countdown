@@ -1,6 +1,9 @@
 # Changelog
 
 ## 1.1.0
+- New switch **Automatic** (on by default): it counts to the nearest of Christmas, New Year's Eve and Easter and moves
+  on by itself. Switched off, the tile counts to what **Count down to** names: one holiday, a date of your own, or a
+  calendar or entity. A tile of 1.0.0 that counts to one holiday, a date or a calendar: switch Automatic off.
 - New option **Arrangement**: the picture as the tile's background with the number on a dark veil at its left (the new
   default), the number at the left and the picture to its right, or the picture as a band on top with the number
   under it.

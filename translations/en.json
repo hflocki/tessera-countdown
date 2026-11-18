@@ -29,9 +29,8 @@
     "summary": "Days until Christmas, New Year's Eve, Easter or your own date, with a picture of the season.",
     "tile_name": "Countdown",
     "tile_example": "36 days until Christmas",
-    "event": "Count down to",
-    "event_hint": "Next holiday picks the nearest of Christmas, New Year's Eve and Easter, and moves on by itself.",
-    "event_auto": "Next holiday",
+    "event": "Count down to (Automatic off)",
+    "event_hint": "A holiday, a date of your own, or a calendar or entity.",
     "event_christmas": "Christmas Eve (24 December)",
     "event_new_years_eve": "New Year's Eve (31 December)",
     "event_easter": "Easter Sunday",
@@ -65,6 +64,8 @@
     "layout_hint": "Where the picture goes. The number beside it needs a tile of two columns; on one column it takes the picture as background.",
     "layout_background": "Picture as background",
     "layout_side": "Number left, picture right",
-    "layout_banner": "Picture on top, number below"
+    "layout_banner": "Picture on top, number below",
+    "auto": "Automatic",
+    "auto_hint": "On: counts to the nearest of Christmas, New Year's Eve and Easter and moves on by itself. Off: counts to what you choose below."
   }
 }

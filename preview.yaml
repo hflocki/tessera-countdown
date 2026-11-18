@@ -13,11 +13,11 @@ tiles:
     sizes: [2x1, 2x2]
   - tile: countdown
     name: Holidays
-    options: { event: entity, entity: calendar.family, what: Holidays }
+    options: { auto: false, event: entity, entity: calendar.family, what: Holidays }
     sizes: [2x1]
   - tile: countdown
     name: Birthday
-    options: { event: date, date: "{now+9d}", motif: birthday }
+    options: { auto: false, event: date, date: "{now+9d}", motif: birthday }
     sizes: [2x1]
 
 states:

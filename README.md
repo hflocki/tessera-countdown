@@ -9,7 +9,7 @@ its right, or the picture as a band on top with the number under it. The picture
 fireworks, Easter eggs, spring flowers, a beach, autumn leaves, a pumpkin, a snowman, a birthday cake or a suitcase.
 On the day itself the tile wishes "Merry Christmas" instead of a number; a calendar's event shows its time.
 
-**Next holiday**, the default, counts to the nearest of Christmas Eve, New Year's Eve and Easter Sunday and moves on by
+**Automatic**, on by default, counts to the nearest of Christmas Eve, New Year's Eve and Easter Sunday and moves on by
 itself: after Christmas to New Year's Eve, then to Easter, then to Christmas again, each with its own picture.
 
 ## Set up
@@ -18,8 +18,9 @@ itself: after Christmas to New Year's Eve, then to Easter, then to Christmas aga
    screen; the screen builds once.
 2. In **Layout**, place the **Countdown** tile. 2 x 1 suits every layout; on a tile of one column the picture is
    the background.
-3. In the tile's options, choose what it counts to under **Count down to**:
-   - **Next holiday**, or one holiday: Christmas Eve, New Year's Eve, Easter Sunday, the first Sunday of Advent,
+3. In the tile's options, leave **Automatic** on for the holidays one after the other, or switch it off and choose
+   what it counts to under **Count down to (Automatic off)**:
+   - One holiday: Christmas Eve, New Year's Eve, Easter Sunday, the first Sunday of Advent,
      Halloween or the start of summer.
    - **A date of my own**, and fill in **Date**: `24.12.` or `12-24` for every year, `2027-05-01` or `1.5.2027` once.
    - **A calendar or entity**, and choose it under **Calendar or entity**: a calendar counts to its next event (its

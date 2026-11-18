@@ -29,9 +29,8 @@
     "summary": "Tage bis Weihnachten, Silvester, Ostern oder zu deinem Termin, mit einem Bild der Jahreszeit.",
     "tile_name": "Countdown",
     "tile_example": "36 Tage bis Weihnachten",
-    "event": "Zählen bis",
-    "event_hint": "Nächster Feiertag nimmt das nächste von Weihnachten, Silvester und Ostern und springt danach selbst weiter.",
-    "event_auto": "Nächster Feiertag",
+    "event": "Zählen bis (Automatik aus)",
+    "event_hint": "Ein Feiertag, ein eigenes Datum oder ein Kalender bzw. eine Entität.",
     "event_christmas": "Heiligabend (24. Dezember)",
     "event_new_years_eve": "Silvester (31. Dezember)",
     "event_easter": "Ostersonntag",
@@ -65,6 +64,8 @@
     "layout_hint": "Wo das Bild sitzt. Zahl neben dem Bild braucht eine Kachel mit zwei Spalten; bei einer Spalte wird das Bild zum Hintergrund.",
     "layout_background": "Bild als Hintergrund",
     "layout_side": "Zahl links, Bild rechts",
-    "layout_banner": "Bild oben, Zahl darunter"
+    "layout_banner": "Bild oben, Zahl darunter",
+    "auto": "Automatik",
+    "auto_hint": "An: zählt bis zum nächsten von Weihnachten, Silvester und Ostern und springt danach selbst weiter. Aus: zählt bis zu dem, was du darunter wählst."
   }
 }

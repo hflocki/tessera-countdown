@@ -103,8 +103,7 @@ static bool parse_state(const std::string &s, int32_t &day, uint32_t &at) {
 enum class Kind : uint8_t { CHRISTMAS, NEW_YEARS_EVE, EASTER, ADVENT, HALLOWEEN, SUMMER, DATE, ENTITY, NONE };
 
 // The kinds a person can choose, by their value in the manifest.
-static Kind kind_of(const char *v, bool &automatic) {
-  automatic = strcmp(v, "auto") == 0;
+static Kind kind_of(const char *v) {
   if (strcmp(v, "christmas") == 0) return Kind::CHRISTMAS;
   if (strcmp(v, "new_years_eve") == 0) return Kind::NEW_YEARS_EVE;
   if (strcmp(v, "easter") == 0) return Kind::EASTER;
@@ -187,7 +186,10 @@ class CountdownTile : public tessera::Tile {
   void create(const tessera::TileContext &c) override {
     width_ = c.width;
     height_ = c.height;
-    kind_ = kind_of(c.options["event"] | "auto", auto_);
+    const char *event = c.options["event"] | "christmas";
+    kind_ = kind_of(event);
+    // Automatic: the nearest of the three holidays.
+    auto_ = c.options["auto"] | true;
     has_date_ = parse_date(c.options["date"] | "", year_, month_, day_);
     snprintf(what_, sizeof what_, "%s", c.options["what"] | "");
     snprintf(entity_, sizeof entity_, "%s", c.options["entity"] | "");
