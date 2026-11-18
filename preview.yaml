@@ -4,6 +4,14 @@ tiles:
     name: Christmas
     sizes: [2x1, 1x1, 2x2, 1x2, 4x3]
   - tile: countdown
+    name: Number left
+    options: { layout: side }
+    sizes: [2x1, 2x2]
+  - tile: countdown
+    name: Picture on top
+    options: { layout: banner }
+    sizes: [2x1, 2x2]
+  - tile: countdown
     name: Holidays
     options: { event: entity, entity: calendar.family, what: Holidays }
     sizes: [2x1]

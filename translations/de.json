@@ -60,6 +60,11 @@
     "motif_winter": "Schneemann",
     "motif_birthday": "Geburtstagstorte",
     "motif_travel": "Reise",
-    "motif_none": "Kein Bild"
+    "motif_none": "Kein Bild",
+    "layout": "Aufteilung",
+    "layout_hint": "Wo das Bild sitzt. Zahl neben dem Bild braucht eine Kachel mit zwei Spalten; bei einer Spalte wird das Bild zum Hintergrund.",
+    "layout_background": "Bild als Hintergrund",
+    "layout_side": "Zahl links, Bild rechts",
+    "layout_banner": "Bild oben, Zahl darunter"
   }
 }

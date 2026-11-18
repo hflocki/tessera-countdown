@@ -170,7 +170,15 @@ static std::string motif_url(const char *motif) {
 
 // ---- The tile -----------------------------------------------------------------------------------------------------
 
-// A picture of the season beside or above the number of days, and what they count to. On the day itself the
+// How the picture and the number share the tile (the option `layout`).
+enum class Layout : uint8_t {
+  SIDE,        // the number at the left, the picture over the rest, to the tile's edges
+  BACKGROUND,  // the picture over the whole tile, the number on a dark veil at its left
+  BANNER,      // the picture as a band over the tile's top, the number and its words in a row under it
+  PLAIN,       // no picture: the number and its words in the middle
+};
+
+// A picture of the season and the number of days until a day, with what they count to. On the day itself the
 // holiday's wish ("Merry Christmas") instead of the number, or the time of a calendar's event.
 class CountdownTile : public tessera::Tile {
  public:
@@ -184,35 +192,68 @@ class CountdownTile : public tessera::Tile {
     snprintf(what_, sizeof what_, "%s", c.options["what"] | "");
     snprintf(entity_, sizeof entity_, "%s", c.options["entity"] | "");
     snprintf(motif_, sizeof motif_, "%s", c.options["motif"] | "auto");
+    const char *layout = c.options["layout"] | "background";
 
-    const int gap = ui::px(ui::large() ? 12 : 8);
-    const int number_h = ui::line_height(Font::DIGITS), body_h = ui::line_height(Font::BODY);
-    const int text_need = number_h + 3 * body_h;
-    const bool picture = ui::pictures() && strcmp(motif_, "none") != 0 && (c.columns >= 2 || c.rows >= 2);
-    // Beside the words where the tile is wide, above them where it is tall.
+    // The layout: a tile of one column has no room for the number beside the picture.
+    layout_ = strcmp(layout, "side") == 0 ? Layout::SIDE : strcmp(layout, "banner") == 0 ? Layout::BANNER
+                                                                                          : Layout::BACKGROUND;
+    if (layout_ == Layout::SIDE && c.columns < 2) layout_ = c.rows >= 2 ? Layout::BANNER : Layout::BACKGROUND;
+    if (!ui::pictures() || strcmp(motif_, "none") == 0) layout_ = Layout::PLAIN;
+    gap_ = ui::px(ui::large() ? 14 : 10);
+
+    // The picture reaches the tile's own edges, over its padding, with the tile's corners.
+    const int pl = lv_obj_get_style_pad_left(c.parent, LV_PART_MAIN), pt = lv_obj_get_style_pad_top(c.parent, LV_PART_MAIN);
+    const int pr = lv_obj_get_style_pad_right(c.parent, LV_PART_MAIN);
+    const int pb = lv_obj_get_style_pad_bottom(c.parent, LV_PART_MAIN);
+    const int radius = lv_obj_get_style_radius(c.parent, LV_PART_MAIN);
     x0_ = 0, y0_ = 0, w_ = width_, h_ = height_;
-    if (picture && width_ - std::min(height_, width_ / 2) >= ui::mm(22)) {
-      const int side = std::min(height_, width_ / 2);
-      place_ = ui::picture(c.parent);
-      lv_obj_set_size(place_, side, side);
-      lv_obj_set_pos(place_, 0, (height_ - side) / 2);
-      x0_ = side + gap;
-      w_ = width_ - x0_;
-    } else if (picture && height_ - text_need - gap >= ui::mm(14)) {
-      const int ph = height_ - text_need - gap;
-      place_ = ui::picture(c.parent);
-      lv_obj_set_size(place_, width_, ph);
-      lv_obj_set_pos(place_, 0, 0);
-      y0_ = ph + gap;
-      h_ = height_ - y0_;
+    switch (layout_) {
+      case Layout::SIDE: {
+        w_ = width_ * 42 / 100;
+        const int x = w_ + gap_;
+        place_ = make_place(c.parent, x, -pt, width_ - x + pr, height_ + pt + pb, radius);
+        break;
+      }
+      case Layout::BACKGROUND: {
+        place_ = make_place(c.parent, -pl, -pt, width_ + pl + pr, height_ + pt + pb, radius);
+        // A veil of the instrument's dark ground, strong at the left and gone at the right, so the number reads on
+        // any picture. On a tile of one column it covers evenly.
+        veil_ = ui::block(c.parent, theme::INSTRUMENT);
+        lv_obj_remove_flag(veil_, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_style_radius(veil_, radius, 0);
+        lv_obj_set_size(veil_, width_ + pl + pr, height_ + pt + pb);
+        lv_obj_set_pos(veil_, -pl, -pt);
+        if (c.columns >= 2) {
+          lv_obj_set_style_bg_grad_color(veil_, ui::color(theme::INSTRUMENT), 0);
+          lv_obj_set_style_bg_grad_dir(veil_, LV_GRAD_DIR_HOR, 0);
+          lv_obj_set_style_bg_main_opa(veil_, LV_OPA_80, 0);
+          lv_obj_set_style_bg_grad_opa(veil_, LV_OPA_TRANSP, 0);
+          lv_obj_set_style_bg_main_stop(veil_, 70, 0);
+          lv_obj_set_style_bg_grad_stop(veil_, 200, 0);
+          w_ = width_ * 55 / 100;
+        } else {
+          lv_obj_set_style_bg_opa(veil_, LV_OPA_50, 0);
+        }
+        break;
+      }
+      case Layout::BANNER: {
+        // The row under the band holds the largest number that fits a third of the tile, at least a title's line.
+        strip_ = std::max(ui::line_height(Font::TITLE), std::min(height_ * 2 / 5, ui::line_height(Font::DIGITS)));
+        y0_ = height_ - strip_;
+        h_ = strip_;
+        place_ = make_place(c.parent, -pl, -pt, width_ + pl + pr, pt + y0_ - gap_ / 2, radius);
+        break;
+      }
+      case Layout::PLAIN:
+        break;
     }
 
     number_ = ui::label(c.parent, Font::DIGITS, theme::INK);
-    lv_obj_set_style_text_align(number_, LV_TEXT_ALIGN_CENTER, 0);
     words_ = ui::text(c.parent, Font::BODY, theme::INK_SOFT);
-    lv_obj_set_style_text_align(words_, LV_TEXT_ALIGN_CENTER, 0);
     date_ = ui::label(c.parent, Font::BODY, theme::MUTED);
-    lv_obj_set_style_text_align(date_, LV_TEXT_ALIGN_CENTER, 0);
+    const lv_text_align_t align = layout_ == Layout::PLAIN ? LV_TEXT_ALIGN_CENTER : LV_TEXT_ALIGN_LEFT;
+    for (lv_obj_t *o : {number_, words_, date_}) lv_obj_set_style_text_align(o, align, 0);
+    on_theme();
   }
 
   void on_state(JsonObjectConst data) override {
@@ -282,7 +323,6 @@ class CountdownTile : public tessera::Tile {
         const uint32_t noon = now - (lt.hour * 3600 + lt.minute * 60 + lt.second) + 12 * 3600 + left * 86400;
         date = tessera::date_text(noon);
       } else if (left == 0) {
-        number = "";
         words = key && !*what_ ? plugin_->text((std::string(key) + "_today").c_str())
                 : name.empty() ? std::string(plugin_->text("today")) : name;
         date = at ? tessera::fill(plugin_->text("at"), "time", tessera::clock_text(at)) : plugin_->text("today");
@@ -291,7 +331,8 @@ class CountdownTile : public tessera::Tile {
         date = plugin_->text("passed");
       }
     }
-    paint(number, words, date);
+    if (layout_ == Layout::BANNER) paint_row(number, words);
+    else paint_column(number, words, date);
 
     if (place_) {
       const char *m = strcmp(motif_, "auto") == 0 ? motif_of(kind, day) : motif_;
@@ -300,51 +341,80 @@ class CountdownTile : public tessera::Tile {
   }
 
   void on_theme() override {
-    ui::set_color(number_, theme::INK);
-    ui::set_color(words_, theme::INK_SOFT);
-    ui::set_color(date_, theme::MUTED);
+    // On the veil the instrument's ink, which stays light in both looks; elsewhere the screen's own.
+    const bool veiled = layout_ == Layout::BACKGROUND;
+    ui::set_color(number_, veiled ? theme::INSTRUMENT_INK : theme::INK);
+    ui::set_color(words_, veiled ? theme::INSTRUMENT_INK : theme::INK_SOFT);
+    ui::set_color(date_, veiled ? theme::INSTRUMENT_MUTED : theme::MUTED);
+    on_tick(tessera::epoch());
   }
 
  private:
-  // The number, the words and the date, together in the middle of the room for words; the date only where it fits.
-  void paint(const std::string &number, const std::string &words, const std::string &date) {
-    Font face = Font::DIGITS;
-    if (!number.empty() && (!ui::covers(number, Font::DIGITS) || ui::text_width(number, Font::DIGITS) > w_))
-      face = Font::VALUE;
+  static lv_obj_t *make_place(lv_obj_t *parent, int x, int y, int w, int h, int radius) {
+    lv_obj_t *place = ui::picture(parent);
+    lv_obj_set_size(place, w, h);
+    lv_obj_set_pos(place, x, y);
+    lv_obj_set_style_radius(place, radius, 0);
+    return place;
+  }
+
+  // The largest face of the number that fits `w` wide and `h` high.
+  static Font number_face(const std::string &number, int w, int h) {
+    for (Font f : {Font::DIGITS, Font::VALUE, Font::HEADLINE}) {
+      if (f == Font::DIGITS && !ui::covers(number, f)) continue;
+      if (ui::line_height(f) <= h && ui::text_width(number, f) <= w) return f;
+    }
+    return Font::TITLE;
+  }
+
+  // The number above its words and the date, in the room for words (x0_, y0_, w_, h_), together in its middle.
+  void paint_column(const std::string &number, const std::string &words, const std::string &date) {
     const int body_h = ui::line_height(Font::BODY);
+    const Font face = number.empty() ? Font::TITLE : number_face(number, w_, h_ - body_h);
     const int nh = number.empty() ? 0 : ui::line_height(face);
     // On the day the words are the headline.
     const Font words_font = number.empty() ? Font::TITLE : Font::BODY;
     const int line = ui::line_height(words_font);
-    const int lines = ui::text_width(words, words_font) > w_ ? 2 : 1;
-    int wh = lines * line;
-    int dh = date.empty() ? 0 : body_h;
-    if (nh + wh + dh > h_) dh = 0;
+    int wh = (ui::text_width(words, words_font) > w_ ? 2 : 1) * line;
     if (nh + wh > h_) wh = line;
+    const int dh = !date.empty() && nh + wh + body_h <= h_ ? body_h : 0;
     const int top = y0_ + std::max(0, (h_ - nh - wh - dh) / 2);
-    ui::set_font(number_, face);
-    ui::set_text(number_, number);
-    lv_obj_set_size(number_, w_, std::max(1, nh));
-    lv_obj_set_pos(number_, x0_, top);
-    ui::set_font(words_, words_font);
-    ui::set_text(words_, words);
-    ui::set_color(words_, number.empty() ? theme::INK : theme::INK_SOFT);
-    lv_obj_set_size(words_, w_, std::max(1, wh));
-    lv_obj_set_pos(words_, x0_, top + nh);
-    ui::set_text(date_, dh ? date : "");
-    lv_obj_set_size(date_, w_, std::max(1, dh ? dh : body_h));
-    lv_obj_set_pos(date_, x0_, top + nh + wh);
+    put(number_, number, face, x0_, top, w_, nh);
+    put(words_, words, words_font, x0_, top + nh, w_, wh);
+    put(date_, dh ? date : "", Font::BODY, x0_, top + nh + wh, w_, body_h);
+  }
+
+  // The number and, right of it, its words, in the row under the band.
+  void paint_row(const std::string &number, const std::string &words) {
+    const Font face = number.empty() ? Font::TITLE : number_face(number, w_ / 2, h_);
+    const int nh = number.empty() ? 0 : ui::line_height(face);
+    const int nw = number.empty() ? 0 : ui::text_width(number, face) + ui::px(2);
+    const int x = nw ? nw + gap_ / 2 : 0, w = std::max(1, w_ - x);
+    const Font words_font = number.empty() ? Font::TITLE : Font::BODY;
+    const int line = ui::line_height(words_font);
+    const int wh = ui::text_width(words, words_font) > w && 2 * line <= h_ ? 2 * line : line;
+    put(number_, number, face, 0, y0_ + (h_ - nh) / 2, nw, nh);
+    put(words_, words, words_font, x, y0_ + (h_ - wh) / 2, w, wh);
+    put(date_, "", Font::BODY, 0, y0_, 1, 1);
+  }
+
+  static void put(lv_obj_t *o, const std::string &text, Font font, int x, int y, int w, int h) {
+    ui::set_font(o, font);
+    ui::set_text(o, text);
+    lv_obj_set_size(o, std::max(1, w), std::max(1, h));
+    lv_obj_set_pos(o, x, y);
   }
 
   const tessera::Plugin *plugin_;
-  int width_ = 0, height_ = 0, x0_ = 0, y0_ = 0, w_ = 0, h_ = 0;
+  Layout layout_ = Layout::BACKGROUND;
+  int width_ = 0, height_ = 0, x0_ = 0, y0_ = 0, w_ = 0, h_ = 0, gap_ = 0, strip_ = 0;
   Kind kind_ = Kind::CHRISTMAS;
   bool auto_ = true, has_date_ = false, has_entity_ = false;
   int year_ = 0, month_ = 0, day_ = 0;
   int32_t entity_day_ = 0;
   uint32_t entity_at_ = 0;
   char what_[65]{}, entity_[96]{}, entity_name_[65]{}, motif_[16]{};
-  lv_obj_t *place_{}, *number_{}, *words_{}, *date_{};
+  lv_obj_t *place_{}, *veil_{}, *number_{}, *words_{}, *date_{};
 };
 
 void Countdown::setup() {

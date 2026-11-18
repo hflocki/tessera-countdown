@@ -60,6 +60,11 @@
     "motif_winter": "Snowman",
     "motif_birthday": "Birthday cake",
     "motif_travel": "Travel",
-    "motif_none": "No picture"
+    "motif_none": "No picture",
+    "layout": "Arrangement",
+    "layout_hint": "Where the picture goes. The number beside it needs a tile of two columns; on one column it takes the picture as background.",
+    "layout_background": "Picture as background",
+    "layout_side": "Number left, picture right",
+    "layout_banner": "Picture on top, number below"
   }
 }

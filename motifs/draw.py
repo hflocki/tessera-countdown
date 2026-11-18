@@ -1,4 +1,7 @@
-"""Draws the countdown's seasonal motifs: flat pictures of 400 x 400 pixels, one per kind of day.
+"""Draws the countdown's seasonal motifs: flat pictures of 600 x 400 pixels, one per kind of day.
+
+Each scene is drawn on a stage of 1200 x 1200 that sits right of the middle of a wider picture, so its subject stays
+in view where the tile lays the number over the left part.
 
 The tile shows them through the Tessera app, which fetches them from this repository's main branch
 (raw.githubusercontent.com). Run it again after a change: python3 motifs/draw.py (needs Pillow).
@@ -9,23 +12,70 @@ import random
 
 from PIL import Image, ImageDraw, ImageFilter
 
-S = 1200          # drawn at three times the size, then scaled down: smooth edges
-OUT = 400
+S = 1200          # the stage, drawn at three times the size, then scaled down: smooth edges
+W, H = 1800, 1200  # the whole picture
+X0 = 450           # where the stage starts in it
+OUT = (600, 400)
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
+class Stage:
+    """ImageDraw on the stage: x of every shape moves by X0. A shape that reaches past both edges of the stage (a
+    ground, a strip of sea) is stretched to the whole width of the picture."""
+
+    def __init__(self, img):
+        self.d = ImageDraw.Draw(img)
+
+    @staticmethod
+    def _box(box):
+        x0, y0, x1, y1 = box
+        if x0 <= 0 and x1 >= S:
+            return [-1, y0, W + 1, y1]
+        return [x0 + X0, y0, x1 + X0, y1]
+
+    @staticmethod
+    def _pts(pts):
+        return [(x + X0, y) for x, y in pts]
+
+    def ellipse(self, box, **kw):
+        self.d.ellipse(self._box(box), **kw)
+
+    def rectangle(self, box, **kw):
+        self.d.rectangle(self._box(box), **kw)
+
+    def rounded_rectangle(self, box, r, **kw):
+        self.d.rounded_rectangle(self._box(box), r, **kw)
+
+    def arc(self, box, a, b, **kw):
+        self.d.arc(self._box(box), a, b, **kw)
+
+    def pieslice(self, box, a, b, **kw):
+        self.d.pieslice(self._box(box), a, b, **kw)
+
+    def polygon(self, pts, **kw):
+        self.d.polygon(self._pts(pts), **kw)
+
+    def line(self, pts, **kw):
+        self.d.line(self._pts(pts), **kw)
+
+
+def stage(img):
+    return Stage(img)
+
+
 def gradient(top, bottom):
-    img = Image.new('RGB', (S, S))
+    img = Image.new('RGB', (W, H))
     d = ImageDraw.Draw(img)
-    for y in range(S):
-        t = y / (S - 1)
-        d.line([(0, y), (S, y)], fill=tuple(int(a + (b - a) * t) for a, b in zip(top, bottom)))
+    for y in range(H):
+        t = y / (H - 1)
+        d.line([(0, y), (W, y)], fill=tuple(int(a + (b - a) * t) for a, b in zip(top, bottom)))
     return img
 
 
 def glow(img, xy, r, color, strength=0.55):
-    layer = Image.new('RGBA', (S, S), (0, 0, 0, 0))
-    ImageDraw.Draw(layer).ellipse([xy[0] - r, xy[1] - r, xy[0] + r, xy[1] + r], fill=color + (int(255 * strength),))
+    layer = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    x = xy[0] + X0
+    ImageDraw.Draw(layer).ellipse([x - r, xy[1] - r, x + r, xy[1] + r], fill=color + (int(255 * strength),))
     layer = layer.filter(ImageFilter.GaussianBlur(r / 2))
     img.paste(layer, (0, 0), layer)
 
@@ -45,18 +95,18 @@ def star(d, x, y, r, fill, points=5, inner=0.45, turn=-90):
 
 def snow(d, rnd, n, color=(255, 255, 255), rmin=4, rmax=12, top=0, bottom=S):
     for _ in range(n):
-        circle(d, rnd.uniform(0, S), rnd.uniform(top, bottom), rnd.uniform(rmin, rmax), color)
+        circle(d, rnd.uniform(-X0, W - X0), rnd.uniform(top, bottom), rnd.uniform(rmin, rmax), color)
 
 
 def save(img, name):
-    img.resize((OUT, OUT), Image.LANCZOS).convert('RGB').save(os.path.join(HERE, name + '.png'), optimize=True)
+    img.resize(OUT, Image.LANCZOS).convert('RGB').save(os.path.join(HERE, name + '.png'), optimize=True)
 
 
 def christmas():
     rnd = random.Random(1)
     img = gradient((18, 32, 72), (40, 70, 130))
     glow(img, (600, 330), 330, (120, 160, 255), 0.25)
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     snow(d, rnd, 70, (230, 238, 255), 3, 9, 0, 1000)
     d.rectangle([0, 1010, S, S], fill=(236, 242, 252))
     d.ellipse([-200, 950, 700, 1150], fill=(236, 242, 252))
@@ -73,7 +123,7 @@ def christmas():
         circle(d, x, y, 30, c)
         circle(d, x - 9, y - 9, 8, (255, 255, 255))
     glow(img, (600, 225), 110, (255, 220, 120), 0.6)
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     star(d, 600, 230, 85, (255, 214, 80))
     for x, w, h, c, r in [(240, 180, 140, (220, 60, 70), (250, 214, 90)), (880, 160, 120, (60, 150, 230), (255, 255, 255))]:
         d.rectangle([x, 1060 - h, x + w, 1060], fill=c)
@@ -85,7 +135,7 @@ def christmas():
 def advent():
     rnd = random.Random(2)
     img = gradient((52, 22, 30), (96, 40, 44))
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     snow(d, rnd, 40, (255, 230, 220), 2, 6)
     d.ellipse([150, 700, 1050, 1080], fill=(30, 100, 60))
     d.ellipse([250, 760, 950, 1000], fill=(40, 125, 74))
@@ -97,7 +147,7 @@ def advent():
     for x, y in ((260, 560), (470, 500), (730, 500), (940, 560)):
         d.line([(x, y), (x, y - 40)], fill=(40, 30, 30), width=8)
         glow(img, (x, y - 95), 90, (255, 190, 80), 0.55)
-        d = ImageDraw.Draw(img)
+        d = stage(img)
         d.ellipse([x - 26, y - 150, x + 26, y - 40], fill=(255, 200, 70))
         d.ellipse([x - 12, y - 115, x + 12, y - 55], fill=(255, 245, 200))
     for x, y in ((380, 980), (600, 1050), (820, 980), (180, 860), (1020, 860)):
@@ -109,12 +159,12 @@ def advent():
 def new_year():
     rnd = random.Random(3)
     img = gradient((10, 12, 40), (40, 24, 80))
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     snow(d, rnd, 90, (200, 200, 255), 2, 5, 0, 900)
     for cx, cy, r, col in [(330, 360, 240, (255, 90, 120)), (820, 300, 280, (255, 210, 80)),
                            (640, 640, 200, (100, 220, 255)), (250, 760, 150, (180, 120, 255))]:
         glow(img, (cx, cy), r * 0.7, col, 0.35)
-        d = ImageDraw.Draw(img)
+        d = stage(img)
         for i in range(24):
             a = i / 24 * 2 * math.pi
             x1, y1 = cx + r * 0.25 * math.cos(a), cy + r * 0.25 * math.sin(a)
@@ -122,8 +172,8 @@ def new_year():
             d.line([(x1, y1), (x2, y2)], fill=col, width=10)
             circle(d, x2, y2, 14, (255, 255, 255))
     d.rectangle([0, 1020, S, S], fill=(14, 14, 30))
-    x = 0
-    while x < S:
+    x = -X0
+    while x < W - X0:
         w, h = rnd.randint(70, 150), rnd.randint(80, 260)
         d.rectangle([x, 1030 - h, x + w, 1030], fill=(20, 20, 44))
         for wy in range(int(1030 - h + 20), 1010, 46):
@@ -144,12 +194,12 @@ def egg(d, x, y, w, h, base, stripe, dots):
 def easter():
     rnd = random.Random(4)
     img = gradient((180, 225, 255), (230, 245, 255))
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     circle(d, 980, 220, 120, (255, 230, 120))
     d.ellipse([-300, 760, 1500, 1500], fill=(120, 200, 110))
     d.ellipse([-200, 840, 900, 1400], fill=(100, 185, 95))
     for _ in range(160):
-        x, y = rnd.uniform(0, S), rnd.uniform(800, S)
+        x, y = rnd.uniform(-X0, W - X0), rnd.uniform(800, S)
         d.line([(x, y), (x + rnd.uniform(-12, 12), y - rnd.uniform(30, 60))], fill=(80, 165, 80), width=7)
     egg(d, 380, 820, 130, 170, (255, 140, 170), (255, 220, 90), (255, 255, 255))
     egg(d, 700, 760, 150, 195, (130, 190, 255), (255, 255, 255), (255, 140, 170))
@@ -172,7 +222,7 @@ def tulip(d, x, y, color, h):
 
 def spring():
     img = gradient((170, 220, 255), (225, 245, 255))
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     for cx, cy in ((250, 220), (820, 320)):
         for dx, dy, r in ((0, 0, 70), (70, -20, 90), (150, 0, 70), (75, 30, 70)):
             circle(d, cx + dx, cy + dy, r, (255, 255, 255))
@@ -186,11 +236,11 @@ def spring():
 def summer():
     img = gradient((80, 180, 250), (190, 235, 255))
     glow(img, (880, 280), 260, (255, 230, 120), 0.6)
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     circle(d, 880, 280, 140, (255, 214, 70))
     d.rectangle([0, 700, S, 900], fill=(40, 140, 210))
     for y in range(720, 900, 40):
-        for x in range(0, S, 160):
+        for x in range(-X0, W - X0, 160):
             d.arc([x, y, x + 120, y + 30], 200, 340, fill=(220, 245, 255), width=6)
     d.ellipse([-200, 840, 1400, 1400], fill=(250, 220, 150))
     d.line([(330, 1000), (240, 520)], fill=(150, 100, 60), width=18)
@@ -217,10 +267,10 @@ def leaf(d, x, y, r, a, color):
 def autumn():
     rnd = random.Random(5)
     img = gradient((255, 190, 120), (240, 130, 80))
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     d.ellipse([-300, 900, 1500, 1500], fill=(170, 90, 50))
     for _ in range(26):
-        leaf(d, rnd.uniform(0, S), rnd.uniform(0, 900), rnd.uniform(40, 70), rnd.uniform(0, math.pi),
+        leaf(d, rnd.uniform(-X0, W - X0), rnd.uniform(0, 900), rnd.uniform(40, 70), rnd.uniform(0, math.pi),
              rnd.choice([(230, 90, 40), (250, 170, 40), (200, 60, 40), (240, 130, 30)]))
     for cx, cy, w, h in ((430, 900, 260, 200), (820, 960, 180, 140)):
         for dx, ww in ((-0.55, 0.5), (0.55, 0.5), (0, 0.6)):
@@ -234,7 +284,7 @@ def autumn():
 def halloween():
     rnd = random.Random(6)
     img = gradient((40, 20, 70), (120, 50, 70))
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     circle(d, 880, 260, 150, (255, 235, 180))
     circle(d, 950, 220, 140, None)
     snow(d, rnd, 50, (255, 240, 200), 2, 5, 0, 700)
@@ -256,7 +306,7 @@ def halloween():
 def winter():
     rnd = random.Random(7)
     img = gradient((120, 170, 230), (210, 230, 250))
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     snow(d, rnd, 120, (255, 255, 255), 4, 12)
     d.ellipse([-300, 860, 1500, 1500], fill=(245, 250, 255))
     circle(d, 600, 880, 210, (255, 255, 255), (200, 215, 235), 8)
@@ -279,9 +329,9 @@ def winter():
 def birthday():
     rnd = random.Random(8)
     img = gradient((255, 220, 235), (255, 245, 250))
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     for _ in range(80):
-        x, y = rnd.uniform(0, S), rnd.uniform(0, 600)
+        x, y = rnd.uniform(-X0, W - X0), rnd.uniform(0, 600)
         c = rnd.choice([(255, 90, 120), (90, 170, 255), (255, 200, 60), (130, 210, 120), (190, 120, 255)])
         d.rectangle([x, y, x + 22, y + 12], fill=c)
     for bx, by, c in ((200, 300, (255, 90, 120)), (1000, 260, (90, 170, 255)), (1060, 520, (255, 200, 60))):
@@ -298,7 +348,7 @@ def birthday():
     for x, c in ((450, (90, 170, 255)), (600, (255, 90, 120)), (750, (255, 200, 60))):
         d.rounded_rectangle([x - 16, 520, x + 16, 670], 8, fill=c)
         glow(img, (x, 480), 60, (255, 200, 80), 0.6)
-        d = ImageDraw.Draw(img)
+        d = stage(img)
         d.ellipse([x - 20, 430, x + 20, 515], fill=(255, 190, 60))
         d.ellipse([x - 8, 460, x + 8, 505], fill=(255, 245, 200))
     save(img, 'birthday')
@@ -306,7 +356,7 @@ def birthday():
 
 def travel():
     img = gradient((90, 170, 240), (200, 230, 255))
-    d = ImageDraw.Draw(img)
+    d = stage(img)
     for cx, cy in ((200, 300), (780, 220), (900, 640)):
         for dx, dy, r in ((0, 0, 70), (70, -20, 90), (150, 0, 70), (75, 30, 70)):
             circle(d, cx + dx, cy + dy, r, (255, 255, 255))
