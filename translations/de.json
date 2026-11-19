@@ -22,7 +22,11 @@
     "summer_today": "Sommeranfang",
     "until": "bis {what}",
     "event": "zum Termin",
-    "passed": "Vorbei"
+    "passed": "Vorbei",
+    "weeks": "Woche | Wochen",
+    "and_days": "und {n} Tag | und {n} Tage",
+    "workdays": "Arbeitstag | Arbeitstage",
+    "fridays": "Freitag | Freitage"
   },
   "app": {
     "name": "Countdown",
@@ -66,6 +70,12 @@
     "layout_side": "Zahl links, Bild rechts",
     "layout_banner": "Bild oben, Zahl darunter",
     "auto": "Automatik",
-    "auto_hint": "An: zählt bis zum nächsten von Weihnachten, Silvester und Ostern und springt danach selbst weiter. Aus: zählt bis zu dem, was du darunter wählst."
+    "auto_hint": "An: zählt bis zum nächsten von Weihnachten, Silvester und Ostern und springt danach selbst weiter. Aus: zählt bis zu dem, was du darunter wählst.",
+    "unit": "Zählen in",
+    "unit_hint": "Arbeitstage sind Montag bis Freitag, Feiertage mitgezählt. Freitage: die zwischen heute und dem Tag.",
+    "unit_days": "Tagen",
+    "unit_weeks": "Wochen und Tagen",
+    "unit_workdays": "Arbeitstagen",
+    "unit_fridays": "Freitagen"
   }
 }

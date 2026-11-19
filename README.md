@@ -25,7 +25,8 @@ itself: after Christmas to New Year's Eve, then to Easter, then to Christmas aga
    - **A date of my own**, and fill in **Date**: `24.12.` or `12-24` for every year, `2027-05-01` or `1.5.2027` once.
    - **A calendar or entity**, and choose it under **Calendar or entity**: a calendar counts to its next event (its
      name under the number), an `input_datetime` or a timestamp sensor to its date.
-4. Optional: another **Arrangement**, a **Name** for the words after the number ("days until Holidays"), and another
+4. Optional: **Count in** weeks, working days (Monday to Friday, public holidays counted as workdays) or Fridays
+   instead of days, another **Arrangement**, a **Name** for the words after the number ("days until Holidays"), and another
    **Picture**. Automatic
    takes the holiday's picture, or the season of the date for a date of your own.
 

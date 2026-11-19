@@ -2,7 +2,7 @@
 # your own, or the next event of a calendar or the date of an entity. Every field is explained in docs/MANIFEST.md of
 # tessera-plugins.
 id: countdown
-version: 1.1.0
+version: 1.2.0
 # 0.10: pictures on a tile; 0.15: a tile's option of kind entity; 0.27: the instrument's roles for the veil.
 api: "0.27"
 icon: calendar
@@ -51,6 +51,16 @@ tiles:
       - { id: entity, kind: entity, domains: [calendar, input_datetime, sensor], attributes: [message, start_time],
           label: entity, hint: entity_hint }
       - { id: what, kind: text, label: what, hint: what_hint }
+      - id: unit
+        kind: choice
+        default: days
+        label: unit
+        hint: unit_hint
+        choices:
+          - { value: days, label: unit_days }
+          - { value: weeks, label: unit_weeks }
+          - { value: workdays, label: unit_workdays }
+          - { value: fridays, label: unit_fridays }
       - id: layout
         kind: choice
         default: background

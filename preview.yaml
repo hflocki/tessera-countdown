@@ -5,7 +5,7 @@ tiles:
     sizes: [2x1, 1x1, 2x2, 1x2, 4x3]
   - tile: countdown
     name: Number left
-    options: { layout: side }
+    options: { layout: side, unit: weeks }
     sizes: [2x1, 2x2]
   - tile: countdown
     name: Picture on top

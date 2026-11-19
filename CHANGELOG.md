@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0
+- New option **Count in**: days (as before), weeks and days ("5 weeks and 1 day"), working days (Monday to Friday) or
+  the Fridays until the day.
+
 ## 1.1.0
 - New switch **Automatic** (on by default): it counts to the nearest of Christmas, New Year's Eve and Easter and moves
   on by itself. Switched off, the tile counts to what **Count down to** names: one holiday, a date of your own, or a

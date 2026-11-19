@@ -33,6 +33,9 @@ static void from_civil(int32_t z, int &y, int &m, int &d) {
   y = static_cast<int>(yoe) + era * 400 + (m <= 2);
 }
 
+// The weekday of a day number, 0 Sunday to 6 Saturday: 1 January 1970 was a Thursday.
+static int weekday(int32_t day) { return ((day + 4) % 7 + 7) % 7; }
+
 // Easter Sunday of a year (the anonymous Gregorian algorithm), as a day number.
 static int32_t easter(int y) {
   const int a = y % 19, b = y / 100, c = y % 100, d = b / 4, e = b % 4, f = (b + 8) / 25, g = (b - f + 1) / 3;
@@ -44,8 +47,7 @@ static int32_t easter(int y) {
 // The first Sunday of Advent: four Sundays before Christmas, the fourth the Sunday on or before 24 December.
 static int32_t advent(int y) {
   const int32_t eve = civil(y, 12, 24);
-  const int weekday = ((eve + 4) % 7 + 7) % 7;  // 0 Sunday: 1 January 1970 was a Thursday
-  return eve - weekday - 21;
+  return eve - weekday(eve) - 21;
 }
 
 // The next day of a yearly date from `today` on: this year's, or next year's once it has passed.
@@ -53,6 +55,17 @@ static int32_t next_yearly(int32_t today, int year, int month, int day) {
   const int32_t d = civil(year, month, day);
   return d >= today ? d : civil(year + 1, month, day);
 }
+// How many days from `from` up to before `to` fall on one of the weekdays in `mask` (bit 0 Sunday).
+static int32_t count_weekdays(int32_t from, int32_t to, uint8_t mask) {
+  if (to <= from) return 0;
+  int per_week = 0;
+  for (int i = 0; i < 7; ++i) per_week += (mask >> i) & 1;
+  const int32_t span = to - from, weeks = span / 7;
+  int32_t n = weeks * per_week;
+  for (int32_t d = from + weeks * 7; d < to; ++d) n += (mask >> weekday(d)) & 1;
+  return n;
+}
+
 static int32_t next_of(int32_t today, int year, int32_t (*of)(int)) {
   const int32_t d = of(year);
   return d >= today ? d : of(year + 1);
@@ -194,6 +207,8 @@ class CountdownTile : public tessera::Tile {
     snprintf(what_, sizeof what_, "%s", c.options["what"] | "");
     snprintf(entity_, sizeof entity_, "%s", c.options["entity"] | "");
     snprintf(motif_, sizeof motif_, "%s", c.options["motif"] | "auto");
+    const char *unit = c.options["unit"] | "days";
+    unit_ = strcmp(unit, "weeks") == 0 ? 'w' : strcmp(unit, "workdays") == 0 ? 'a' : strcmp(unit, "fridays") == 0 ? 'f' : 'd';
     const char *layout = c.options["layout"] | "background";
 
     // The layout: a tile of one column has no room for the number beside the picture.
@@ -319,8 +334,23 @@ class CountdownTile : public tessera::Tile {
       std::string until = key && !*what_ ? plugin_->text(key)
                           : tessera::fill(plugin_->text("until"), "what", name.empty() ? plugin_->text("event") : name);
       if (left > 0) {
-        number = std::to_string(left);
-        words = tessera::format(plugin_->text("days"), left) + " " + until;
+        // In the unit chosen: days, weeks and the days over, working days (Monday to Friday, today among them while
+        // it is one) or the Fridays between today and the day.
+        int32_t n = left;
+        std::string unit = tessera::format(plugin_->text("days"), left);
+        if (unit_ == 'w' && left >= 7) {
+          n = left / 7;
+          unit = tessera::format(plugin_->text("weeks"), n);
+          if (left % 7) unit += " " + tessera::format(plugin_->text("and_days"), left % 7);
+        } else if (unit_ == 'a') {
+          n = count_weekdays(today, day, 0x3E);
+          unit = tessera::format(plugin_->text("workdays"), n);
+        } else if (unit_ == 'f') {
+          n = count_weekdays(today + 1, day, 0x20);
+          unit = tessera::format(plugin_->text("fridays"), n);
+        }
+        number = std::to_string(n);
+        words = unit + " " + until;
         // Noon of that day, so a change of summer time never moves it to another date.
         const uint32_t noon = now - (lt.hour * 3600 + lt.minute * 60 + lt.second) + 12 * 3600 + left * 86400;
         date = tessera::date_text(noon);
@@ -415,6 +445,7 @@ class CountdownTile : public tessera::Tile {
   int year_ = 0, month_ = 0, day_ = 0;
   int32_t entity_day_ = 0;
   uint32_t entity_at_ = 0;
+  char unit_ = 'd';  // d days, w weeks, a working days, f Fridays
   char what_[65]{}, entity_[96]{}, entity_name_[65]{}, motif_[16]{};
   lv_obj_t *place_{}, *veil_{}, *number_{}, *words_{}, *date_{};
 };

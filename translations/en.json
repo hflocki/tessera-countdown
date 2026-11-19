@@ -22,7 +22,11 @@
     "summer_today": "Summer starts",
     "until": "until {what}",
     "event": "the event",
-    "passed": "Over"
+    "passed": "Over",
+    "weeks": "week | weeks",
+    "and_days": "and {n} day | and {n} days",
+    "workdays": "working day | working days",
+    "fridays": "Friday | Fridays"
   },
   "app": {
     "name": "Countdown",
@@ -66,6 +70,12 @@
     "layout_side": "Number left, picture right",
     "layout_banner": "Picture on top, number below",
     "auto": "Automatic",
-    "auto_hint": "On: counts to the nearest of Christmas, New Year's Eve and Easter and moves on by itself. Off: counts to what you choose below."
+    "auto_hint": "On: counts to the nearest of Christmas, New Year's Eve and Easter and moves on by itself. Off: counts to what you choose below.",
+    "unit": "Count in",
+    "unit_hint": "Working days are Monday to Friday, public holidays included. Fridays: those between today and the day.",
+    "unit_days": "Days",
+    "unit_weeks": "Weeks and days",
+    "unit_workdays": "Working days",
+    "unit_fridays": "Fridays"
   }
 }
