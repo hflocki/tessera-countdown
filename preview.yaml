@@ -19,16 +19,15 @@ tiles:
     name: Birthday
     options: { auto: false, event: date, date: "{now+9d}", motif: birthday }
     sizes: [2x1]
+  - tile: countdown
+    name: Retirement
+    options: { auto: false, event: date, date: "2045-03-01", what: Retirement, unit: years, motif: retirement }
+    sizes: [2x1]
 
 states:
   calendar.family:
     state: "off"
     attributes: { friendly_name: Family, message: Summer holidays, start_time: "{now+20d}" }
-
-  - tile: countdown
-    name: Retirement
-    options: { auto: false, event: date, date: "2045-03-01", what: Retirement, unit: years, motif: retirement }
-    sizes: [2x1]
 
 pictures:
   "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/christmas.png": motifs/christmas.png
