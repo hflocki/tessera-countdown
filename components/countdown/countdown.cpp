@@ -208,7 +208,9 @@ class CountdownTile : public tessera::Tile {
     snprintf(entity_, sizeof entity_, "%s", c.options["entity"] | "");
     snprintf(motif_, sizeof motif_, "%s", c.options["motif"] | "auto");
     const char *unit = c.options["unit"] | "days";
-    unit_ = strcmp(unit, "weeks") == 0 ? 'w' : strcmp(unit, "workdays") == 0 ? 'a' : strcmp(unit, "fridays") == 0 ? 'f' : 'd';
+    unit_ = strcmp(unit, "weeks") == 0 ? 'w' : strcmp(unit, "workdays") == 0 ? 'a' : strcmp(unit, "fridays") == 0 ? 'f'
+            : strcmp(unit, "years") == 0  ? 'y'
+                                          : 'd';
     const char *layout = c.options["layout"] | "background";
 
     // The layout: a tile of one column has no room for the number beside the picture.
@@ -345,7 +347,7 @@ class CountdownTile : public tessera::Tile {
                           : tessera::fill(plugin_->text("until"), "what", name.empty() ? plugin_->text("event") : name);
       if (left > 0) {
         // In the unit chosen: days, weeks and the days over, working days (Monday to Friday, today among them while
-        // it is one) or the Fridays between today and the day.
+        // it is one), the Fridays between today and the day, or years and months.
         int32_t n = left;
         std::string unit = tessera::format(plugin_->text("days"), left);
         if (unit_ == 'w' && left >= 7) {
@@ -358,6 +360,19 @@ class CountdownTile : public tessera::Tile {
         } else if (unit_ == 'f') {
           n = count_weekdays(today + 1, day, 0x20);
           unit = tessera::format(plugin_->text("fridays"), n);
+        } else if (unit_ == 'y') {
+          // Whole months from today's date to the day's, the last one counted once its day of the month is reached.
+          int ty, tm, td;
+          from_civil(day, ty, tm, td);
+          const int32_t months = (ty - lt.year) * 12 + (tm - lt.month) - (td < lt.day ? 1 : 0);
+          if (months >= 12) {
+            n = months / 12;
+            unit = tessera::format(plugin_->text("years"), n);
+            if (months % 12) unit += " " + tessera::format(plugin_->text("and_months"), months % 12);
+          } else if (months >= 1) {
+            n = months;
+            unit = tessera::format(plugin_->text("months"), n);
+          }
         }
         number = std::to_string(n);
         words = unit + " " + until;
@@ -459,7 +474,7 @@ class CountdownTile : public tessera::Tile {
   int year_ = 0, month_ = 0, day_ = 0;
   int32_t entity_day_ = 0;
   uint32_t entity_at_ = 0;
-  char unit_ = 'd';  // d days, w weeks, a working days, f Fridays
+  char unit_ = 'd';  // d days, w weeks, a working days, f Fridays, y years and months
   char what_[65]{}, entity_[96]{}, entity_name_[65]{}, motif_[16]{};
   int ox_ = 0, oy_ = 0;  // where the tile's corner lies in the labels' holder
   lv_obj_t *holder_{};    // the veil holding the labels, else none (the tile)

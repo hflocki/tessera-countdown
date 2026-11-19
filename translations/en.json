@@ -26,7 +26,10 @@
     "weeks": "week | weeks",
     "and_days": "and {n} day | and {n} days",
     "workdays": "working day | working days",
-    "fridays": "Friday | Fridays"
+    "fridays": "Friday | Fridays",
+    "years": "year | years",
+    "and_months": "and {n} month | and {n} months",
+    "months": "month | months"
   },
   "app": {
     "name": "Countdown",
@@ -62,7 +65,7 @@
     "motif_halloween": "Pumpkin",
     "motif_winter": "Snowman",
     "motif_birthday": "Birthday cake",
-    "motif_travel": "Travel",
+    "motif_travel": "Suitcase (travel)",
     "motif_none": "No picture",
     "layout": "Arrangement",
     "layout_hint": "Where the picture goes. The number beside it needs a tile of two columns; on one column it takes the picture as background.",
@@ -76,6 +79,9 @@
     "unit_days": "Days",
     "unit_weeks": "Weeks and days",
     "unit_workdays": "Working days",
-    "unit_fridays": "Fridays"
+    "unit_fridays": "Fridays",
+    "unit_years": "Years and months",
+    "motif_retirement": "Hammock (holidays, retirement)",
+    "motif_camper": "Camper van"
   }
 }

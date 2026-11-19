@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+- **Count in** years and months ("18 years and 3 months"), for a day far ahead such as retirement.
+- Two new pictures: a hammock between palms at sunset, for holidays or retirement, and a camper van on the road.
+
 ## 1.2.1
 - Picture as background: the words stand on the dark veil itself, readable in the light look too, and the veil stays
   dark further to the right.

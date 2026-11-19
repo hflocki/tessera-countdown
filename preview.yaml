@@ -13,7 +13,7 @@ tiles:
     sizes: [2x1, 2x2]
   - tile: countdown
     name: Holidays
-    options: { auto: false, event: entity, entity: calendar.family, what: Holidays }
+    options: { auto: false, event: entity, entity: calendar.family, what: Holidays, motif: camper }
     sizes: [2x1]
   - tile: countdown
     name: Birthday
@@ -24,6 +24,11 @@ states:
   calendar.family:
     state: "off"
     attributes: { friendly_name: Family, message: Summer holidays, start_time: "{now+20d}" }
+
+  - tile: countdown
+    name: Retirement
+    options: { auto: false, event: date, date: "2045-03-01", what: Retirement, unit: years, motif: retirement }
+    sizes: [2x1]
 
 pictures:
   "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/christmas.png": motifs/christmas.png
@@ -37,3 +42,5 @@ pictures:
   "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/winter.png": motifs/winter.png
   "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/birthday.png": motifs/birthday.png
   "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/travel.png": motifs/travel.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/retirement.png": motifs/retirement.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/camper.png": motifs/camper.png

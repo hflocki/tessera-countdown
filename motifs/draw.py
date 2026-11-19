@@ -375,7 +375,88 @@ def travel():
     save(img, 'travel')
 
 
+def palm(d, x, y, h, lean):
+    # A trunk of rings leaning to one side, and a crown of fronds.
+    top = (x + lean, y - h)
+    for i in range(14):
+        t0, t1 = i / 14, (i + 1) / 14
+        x0, y0 = x + lean * t0 ** 1.6, y - h * t0
+        x1, y1 = x + lean * t1 ** 1.6, y - h * t1
+        d.line([(x0, y0), (x1, y1)], fill=(120, 72, 40) if i % 2 else (140, 88, 50), width=int(34 - 14 * t0))
+    for a in (200, 230, 260, 290, 320, 345, 15, 160):
+        r = math.radians(a)
+        tip = (top[0] + 260 * math.cos(r), top[1] + 150 * math.sin(r) + 70)
+        mid = (top[0] + 140 * math.cos(r), top[1] + 80 * math.sin(r) - 30)
+        d.polygon([top, (mid[0], mid[1] - 26), tip, (mid[0], mid[1] + 26)], fill=(30, 90, 60))
+    return top
+
+
+def retirement():
+    img = gradient((250, 140, 90), (255, 200, 140))
+    glow(img, (600, 700), 300, (255, 230, 160), 0.6)
+    d = stage(img)
+    circle(d, 600, 720, 170, (255, 236, 170))
+    d.rectangle([0, 720, S, 900], fill=(70, 110, 160))
+    for y in range(740, 900, 36):
+        for x in range(-X0, W - X0, 150):
+            d.arc([x, y, x + 110, y + 26], 200, 340, fill=(250, 190, 150), width=6)
+    d.ellipse([-300, 860, 1500, 1500], fill=(240, 200, 140))
+    left = palm(d, 220, 1000, 560, -60)
+    right = palm(d, 1000, 1000, 520, 70)
+    # The hammock between the trunks, a sag of cloth with its two ropes.
+    a, b = (left[0] + 30, left[1] + 200), (right[0] - 40, right[1] + 220)
+    sag = [(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t + 230 * math.sin(math.pi * t)) for t in
+           [i / 30 for i in range(31)]]
+    d.polygon(sag + [(b[0] - 60, b[1] + 40), (a[0] + 60, a[1] + 40)], fill=(240, 90, 80))
+    for i in range(1, 6):
+        stripe = [(x, y - 10 - i * 16) for x, y in sag[6:-6]]
+        d.line(stripe, fill=(255, 220, 120) if i % 2 else (250, 250, 240), width=8)
+    d.line([a, sag[2]], fill=(90, 60, 40), width=8)
+    d.line([b, sag[-3]], fill=(90, 60, 40), width=8)
+    for x, y in ((380, 300), (470, 250), (860, 280)):
+        d.arc([x - 40, y - 20, x, y + 20], 200, 340, fill=(90, 50, 60), width=8)
+        d.arc([x, y - 20, x + 40, y + 20], 200, 340, fill=(90, 50, 60), width=8)
+    save(img, 'retirement')
+
+
+def camper():
+    # A generic retro camper van, side on, on a road through hills: no maker's sign.
+    img = gradient((110, 190, 240), (200, 235, 255))
+    d = stage(img)
+    circle(d, 980, 200, 90, (255, 225, 110))
+    for cx, cy in ((180, 240), (640, 170)):
+        for dx, dy, r in ((0, 0, 60), (60, -20, 80), (130, 0, 60), (65, 25, 60)):
+            circle(d, cx + dx, cy + dy, r, (255, 255, 255))
+    d.ellipse([-500, 560, 700, 1100], fill=(110, 170, 100))
+    d.ellipse([400, 520, 1700, 1100], fill=(90, 155, 90))
+    for x in (-300, -120, 1180, 1320):
+        d.polygon([(x, 760), (x - 60, 760), (x - 30, 600)], fill=(40, 110, 70))
+        d.polygon([(x, 700), (x - 50, 700), (x - 25, 560)], fill=(50, 125, 80))
+    d.rectangle([0, 900, S, S], fill=(110, 110, 120))
+    for x in range(-X0, W - X0, 220):
+        d.rectangle([x, 1010, x + 120, 1030], fill=(250, 250, 250))
+    d.rectangle([0, 860, S, 900], fill=(120, 175, 100))
+    # The body: a lower half in colour, an upper half in cream, a rounded front at the right.
+    body = (180, 470, 1030, 930)
+    d.rounded_rectangle(body, 120, fill=(240, 236, 220))
+    d.rounded_rectangle((180, 660, 1030, 930), 100, fill=(60, 160, 170))
+    d.rectangle([180, 660, 1030, 780], fill=(60, 160, 170))
+    d.rounded_rectangle((200, 420, 900, 490), 30, fill=(80, 80, 90))
+    for x in (250, 420, 590):
+        d.rounded_rectangle((x, 520, x + 140, 630), 22, fill=(150, 200, 230))
+    d.rounded_rectangle((770, 520, 960, 630), 40, fill=(150, 200, 230))
+    d.line([(760, 520), (760, 900)], fill=(200, 196, 180), width=6)
+    d.rounded_rectangle((990, 760, 1045, 800), 12, fill=(255, 210, 90))
+    d.rounded_rectangle((150, 760, 200, 800), 12, fill=(230, 70, 60))
+    d.rectangle([180, 880, 1030, 905], fill=(70, 70, 80))
+    for x in (360, 860):
+        circle(d, x, 920, 82, (40, 40, 45))
+        circle(d, x, 920, 40, (210, 210, 215))
+    save(img, 'camper')
+
+
 if __name__ == '__main__':
-    for draw in (christmas, advent, new_year, easter, spring, summer, autumn, halloween, winter, birthday, travel):
+    for draw in (christmas, advent, new_year, easter, spring, summer, autumn, halloween, winter, birthday, travel,
+                 retirement, camper):
         draw()
     print('motifs drawn in', HERE)

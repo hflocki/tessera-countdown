@@ -26,7 +26,10 @@
     "weeks": "Woche | Wochen",
     "and_days": "und {n} Tag | und {n} Tage",
     "workdays": "Arbeitstag | Arbeitstage",
-    "fridays": "Freitag | Freitage"
+    "fridays": "Freitag | Freitage",
+    "years": "Jahr | Jahre",
+    "and_months": "und {n} Monat | und {n} Monate",
+    "months": "Monat | Monate"
   },
   "app": {
     "name": "Countdown",
@@ -62,7 +65,7 @@
     "motif_halloween": "Kürbis",
     "motif_winter": "Schneemann",
     "motif_birthday": "Geburtstagstorte",
-    "motif_travel": "Reise",
+    "motif_travel": "Koffer (Reise)",
     "motif_none": "Kein Bild",
     "layout": "Aufteilung",
     "layout_hint": "Wo das Bild sitzt. Zahl neben dem Bild braucht eine Kachel mit zwei Spalten; bei einer Spalte wird das Bild zum Hintergrund.",
@@ -76,6 +79,9 @@
     "unit_days": "Tagen",
     "unit_weeks": "Wochen und Tagen",
     "unit_workdays": "Arbeitstagen",
-    "unit_fridays": "Freitagen"
+    "unit_fridays": "Freitagen",
+    "unit_years": "Jahren und Monaten",
+    "motif_retirement": "Hängematte (Urlaub, Rente)",
+    "motif_camper": "Campervan"
   }
 }

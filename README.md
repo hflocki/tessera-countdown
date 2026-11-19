@@ -6,7 +6,8 @@ How many days until Christmas, New Year's Eve or Easter, with a picture of the s
 where there is room, and a picture of the season to the tile's edges. Under **Arrangement** you choose how they share the
 tile: the picture as background with the number on a dark veil at the left, the number at the left and the picture to
 its right, or the picture as a band on top with the number under it. The pictures: a Christmas tree, an Advent wreath,
-fireworks, Easter eggs, spring flowers, a beach, autumn leaves, a pumpkin, a snowman, a birthday cake or a suitcase.
+fireworks, Easter eggs, spring flowers, a beach, autumn leaves, a pumpkin, a snowman, a birthday cake, a suitcase, a hammock or a
+camper van.
 On the day itself the tile wishes "Merry Christmas" instead of a number; a calendar's event shows its time.
 
 **Automatic**, on by default, counts to the nearest of Christmas Eve, New Year's Eve and Easter Sunday and moves on by
@@ -31,6 +32,13 @@ itself: after Christmas to New Year's Eve, then to Easter, then to Christmas aga
    takes the holiday's picture, or the season of the date for a date of your own.
 
 Options change without a build.
+
+## Until retirement
+
+Switch **Automatic** off, choose **A date of my own** and fill in the day, such as `2045-03-01`; then **Name**
+`retirement`, **Count in** years and months, and the picture **Hammock**: "18 years and 3 months until retirement".
+
+For holidays the same with their first day, the **Name** `holidays`, and the picture **Hammock** or **Camper van**.
 
 ## Good to know
 
