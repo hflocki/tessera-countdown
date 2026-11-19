@@ -2,7 +2,7 @@
 # your own, or the next event of a calendar or the date of an entity. Every field is explained in docs/MANIFEST.md of
 # tessera-plugins.
 id: countdown
-version: 1.2.0
+version: 1.2.1
 # 0.10: pictures on a tile; 0.15: a tile's option of kind entity; 0.27: the instrument's roles for the veil.
 api: "0.27"
 icon: calendar

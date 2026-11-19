@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1
+- Picture as background: the words stand on the dark veil itself, readable in the light look too, and the veil stays
+  dark further to the right.
+- On boards without pictures, an empty date line no longer reaches below the tile.
+
 ## 1.2.0
 - New option **Count in**: days (as before), weeks and days ("5 weeks and 1 day"), working days (Monday to Friday) or
   the Fridays until the day.

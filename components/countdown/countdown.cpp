@@ -232,7 +232,8 @@ class CountdownTile : public tessera::Tile {
         break;
       }
       case Layout::BACKGROUND: {
-        place_ = make_place(c.parent, -pl, -pt, width_ + pl + pr, height_ + pt + pb, radius);
+        // No block while the picture comes: the veil and the words stand on the tile meanwhile.
+        place_ = make_place(c.parent, -pl, -pt, width_ + pl + pr, height_ + pt + pb, radius, tessera::Placeholder::NONE);
         // A veil of the instrument's dark ground, strong at the left and gone at the right, so the number reads on
         // any picture. On a tile of one column it covers evenly.
         veil_ = ui::block(c.parent, theme::INSTRUMENT);
@@ -240,17 +241,25 @@ class CountdownTile : public tessera::Tile {
         lv_obj_set_style_radius(veil_, radius, 0);
         lv_obj_set_size(veil_, width_ + pl + pr, height_ + pt + pb);
         lv_obj_set_pos(veil_, -pl, -pt);
+        // The veil is fully opaque as a ground (bg_opa) and lets the picture through by its gradient's own
+        // opacities, so the words, its children, always stand on the instrument's dark ground.
+        lv_obj_set_style_bg_grad_color(veil_, ui::color(theme::INSTRUMENT), 0);
         if (c.columns >= 2) {
-          lv_obj_set_style_bg_grad_color(veil_, ui::color(theme::INSTRUMENT), 0);
           lv_obj_set_style_bg_grad_dir(veil_, LV_GRAD_DIR_HOR, 0);
           lv_obj_set_style_bg_main_opa(veil_, LV_OPA_80, 0);
           lv_obj_set_style_bg_grad_opa(veil_, LV_OPA_TRANSP, 0);
-          lv_obj_set_style_bg_main_stop(veil_, 70, 0);
-          lv_obj_set_style_bg_grad_stop(veil_, 200, 0);
+          lv_obj_set_style_bg_main_stop(veil_, 110, 0);
+          lv_obj_set_style_bg_grad_stop(veil_, 235, 0);
           w_ = width_ * 55 / 100;
         } else {
-          lv_obj_set_style_bg_opa(veil_, LV_OPA_50, 0);
+          lv_obj_set_style_bg_grad_dir(veil_, LV_GRAD_DIR_VER, 0);
+          lv_obj_set_style_bg_main_opa(veil_, LV_OPA_60, 0);
+          lv_obj_set_style_bg_grad_opa(veil_, LV_OPA_60, 0);
         }
+        // The words go into the veil, whose corner lies at the tile's padding.
+        holder_ = veil_;
+        ox_ = pl;
+        oy_ = pt;
         break;
       }
       case Layout::BANNER: {
@@ -265,9 +274,10 @@ class CountdownTile : public tessera::Tile {
         break;
     }
 
-    number_ = ui::label(c.parent, Font::DIGITS, theme::INK);
-    words_ = ui::text(c.parent, Font::BODY, theme::INK_SOFT);
-    date_ = ui::label(c.parent, Font::BODY, theme::MUTED);
+    lv_obj_t *holder = holder_ ? holder_ : c.parent;
+    number_ = ui::label(holder, Font::DIGITS, theme::INK);
+    words_ = ui::text(holder, Font::BODY, theme::INK_SOFT);
+    date_ = ui::label(holder, Font::BODY, theme::MUTED);
     const lv_text_align_t align = layout_ == Layout::PLAIN ? LV_TEXT_ALIGN_CENTER : LV_TEXT_ALIGN_LEFT;
     for (lv_obj_t *o : {number_, words_, date_}) lv_obj_set_style_text_align(o, align, 0);
     on_theme();
@@ -382,8 +392,9 @@ class CountdownTile : public tessera::Tile {
   }
 
  private:
-  static lv_obj_t *make_place(lv_obj_t *parent, int x, int y, int w, int h, int radius) {
-    lv_obj_t *place = ui::picture(parent);
+  static lv_obj_t *make_place(lv_obj_t *parent, int x, int y, int w, int h, int radius,
+                              tessera::Placeholder placeholder = tessera::Placeholder::BLOCK) {
+    lv_obj_t *place = ui::picture(parent, placeholder);
     lv_obj_set_size(place, w, h);
     lv_obj_set_pos(place, x, y);
     lv_obj_set_style_radius(place, radius, 0);
@@ -413,7 +424,9 @@ class CountdownTile : public tessera::Tile {
     const int top = y0_ + std::max(0, (h_ - nh - wh - dh) / 2);
     put(number_, number, face, x0_, top, w_, nh);
     put(words_, words, words_font, x0_, top + nh, w_, wh);
-    put(date_, dh ? date : "", Font::BODY, x0_, top + nh + wh, w_, body_h);
+    // Without room the date stays empty and small at the top, inside the tile.
+    if (dh) put(date_, date, Font::BODY, x0_, top + nh + wh, w_, body_h);
+    else put(date_, "", Font::BODY, x0_, y0_, 1, 1);
   }
 
   // The number and, right of it, its words, in the row under the band.
@@ -430,11 +443,12 @@ class CountdownTile : public tessera::Tile {
     put(date_, "", Font::BODY, 0, y0_, 1, 1);
   }
 
-  static void put(lv_obj_t *o, const std::string &text, Font font, int x, int y, int w, int h) {
+  // A label at a place in the tile's own coordinates, moved by the corner of the veil that holds it.
+  void put(lv_obj_t *o, const std::string &text, Font font, int x, int y, int w, int h) {
     ui::set_font(o, font);
     ui::set_text(o, text);
     lv_obj_set_size(o, std::max(1, w), std::max(1, h));
-    lv_obj_set_pos(o, x, y);
+    lv_obj_set_pos(o, x + ox_, y + oy_);
   }
 
   const tessera::Plugin *plugin_;
@@ -447,6 +461,8 @@ class CountdownTile : public tessera::Tile {
   uint32_t entity_at_ = 0;
   char unit_ = 'd';  // d days, w weeks, a working days, f Fridays
   char what_[65]{}, entity_[96]{}, entity_name_[65]{}, motif_[16]{};
+  int ox_ = 0, oy_ = 0;  // where the tile's corner lies in the labels' holder
+  lv_obj_t *holder_{};    // the veil holding the labels, else none (the tile)
   lv_obj_t *place_{}, *veil_{}, *number_{}, *words_{}, *date_{};
 };
 
