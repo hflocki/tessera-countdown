@@ -85,10 +85,11 @@ static bool parse_date(const char *text, int &y, int &m, int &d) {
 
 // A moment as Home Assistant writes a state: "2026-12-24", "2026-12-24 18:00:00" (local, an input_datetime) or
 // "2026-12-24T17:00:00+00:00" (a timestamp sensor). Gives the local day, and the moment when it has a time.
-static bool parse_state(const std::string &s, int32_t &day, uint32_t &at) {
+static bool parse_state(const std::string &s, int32_t &day, uint32_t &at, int &minute) {
   int y, mo, d, h = -1, mi = 0, sec = 0;
   if (sscanf(s.c_str(), "%4d-%2d-%2d", &y, &mo, &d) != 3 || mo < 1 || mo > 12 || d < 1 || d > 31) return false;
   at = 0;
+  minute = -1;
   if (s.size() >= 16) sscanf(s.c_str() + 11, "%2d:%2d:%2d", &h, &mi, &sec);
   const size_t zone = s.size() > 19 ? s.find_first_of("+-Z", 19) : std::string::npos;
   if (h >= 0 && zone != std::string::npos) {
@@ -107,7 +108,7 @@ static bool parse_state(const std::string &s, int32_t &day, uint32_t &at) {
     return true;
   }
   day = civil(y, mo, d);
-  if (h > 0 || mi > 0) at = 1;  // a local time of day: shown as such on the day, never compared
+  if (h > 0 || mi > 0) minute = h * 60 + mi;  // a local time of day, shown on the day itself
   return true;
 }
 
@@ -176,8 +177,11 @@ static const char *motif_of(Kind k, int32_t day) {
   return "autumn";
 }
 
-static std::string motif_url(const char *motif) {
-  return std::string("https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/") + motif + ".png";
+// A picture of the release the screen runs (its tag is the bare version), so a change on main never reaches a screen
+// before its release.
+static std::string motif_url(const char *version, const char *motif) {
+  return std::string("https://raw.githubusercontent.com/hflocki/tessera-countdown/") + version + "/motifs/" + motif +
+         ".png";
 }
 
 // ---- The tile -----------------------------------------------------------------------------------------------------
@@ -293,6 +297,7 @@ class CountdownTile : public tessera::Tile {
     const std::string state = e["state"] | "";
     snprintf(entity_name_, sizeof entity_name_, "%s", e["name"] | "");
     entity_at_ = 0;
+    entity_minute_ = -1;
     if (strncmp(entity_, "calendar.", 9) == 0) {
       const uint32_t start = e["attributes"]["start_time"] | 0u;
       const char *message = e["attributes"]["message"] | "";
@@ -304,7 +309,7 @@ class CountdownTile : public tessera::Tile {
         has_entity_ = true;
       }
     } else {
-      has_entity_ = parse_state(state, entity_day_, entity_at_);
+      has_entity_ = parse_state(state, entity_day_, entity_at_, entity_minute_);
     }
   }
 
@@ -330,11 +335,14 @@ class CountdownTile : public tessera::Tile {
     } else if (kind_ == Kind::ENTITY) {
       known = has_entity_;
       day = entity_day_;
-      at = entity_at_ > 1 ? entity_at_ : 0;
+      at = entity_at_;
     } else {
       day = holiday(kind_, today, lt.year);
     }
     const int32_t left = day - today;
+    // A local time of day (an input_datetime): that time on the day, for "Today 18:00".
+    if (!at && kind_ == Kind::ENTITY && entity_minute_ >= 0)
+      at = now - (lt.hour * 3600 + lt.minute * 60 + lt.second) + left * 86400 + entity_minute_ * 60;
 
     std::string number, words, date;
     if (!known) {
@@ -393,7 +401,7 @@ class CountdownTile : public tessera::Tile {
 
     if (place_) {
       const char *m = strcmp(motif_, "auto") == 0 ? motif_of(kind, day) : motif_;
-      ui::set_picture(place_, motif_url(m), tessera::Fit::COVER);
+      ui::set_picture(place_, motif_url(plugin_->plugin_version(), m), tessera::Fit::COVER);
     }
   }
 
@@ -474,6 +482,7 @@ class CountdownTile : public tessera::Tile {
   int year_ = 0, month_ = 0, day_ = 0;
   int32_t entity_day_ = 0;
   uint32_t entity_at_ = 0;
+  int entity_minute_ = -1;  // the minute of the day of an input_datetime's local time, -1 for none
   char unit_ = 'd';  // d days, w weeks, a working days, f Fridays, y years and months
   char what_[65]{}, entity_[96]{}, entity_name_[65]{}, motif_[16]{};
   int ox_ = 0, oy_ = 0;  // where the tile's corner lies in the labels' holder

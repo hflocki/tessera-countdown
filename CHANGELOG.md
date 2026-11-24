@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.1
+- The pictures come from this version's release instead of the main branch, so a screen shows the pictures of the
+  version it runs.
+- An input_datetime with a time of day shows that time on the day itself ("Today 18:00").
+- The date's hint says that a yearly 29 February falls on 1 March in other years.
+- README: the boards it was tried on.
+
 ## 1.3.0
 - **Count in** years and months ("18 years and 3 months"), for a day far ahead such as retirement.
 - Two new pictures: a hammock between palms at sunset, for holidays or retirement, and a camper van on the road.

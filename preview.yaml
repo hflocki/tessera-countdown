@@ -1,4 +1,5 @@
-# What tools/preview.py shows (docs/PREVIEW.md). The pictures come from motifs/, never from the internet.
+# What tools/preview.py shows (docs/PREVIEW.md). The pictures come from motifs/, never from the internet; their
+# addresses carry the manifest's version (motif_url), so raise it here with every release.
 tiles:
   - tile: countdown
     name: Christmas
@@ -30,16 +31,16 @@ states:
     attributes: { friendly_name: Family, message: Summer holidays, start_time: "{now+20d}" }
 
 pictures:
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/christmas.png": motifs/christmas.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/advent.png": motifs/advent.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/new_year.png": motifs/new_year.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/easter.png": motifs/easter.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/spring.png": motifs/spring.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/summer.png": motifs/summer.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/autumn.png": motifs/autumn.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/halloween.png": motifs/halloween.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/winter.png": motifs/winter.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/birthday.png": motifs/birthday.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/travel.png": motifs/travel.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/retirement.png": motifs/retirement.png
-  "https://raw.githubusercontent.com/hflocki/tessera-countdown/main/motifs/camper.png": motifs/camper.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/christmas.png": motifs/christmas.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/advent.png": motifs/advent.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/new_year.png": motifs/new_year.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/easter.png": motifs/easter.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/spring.png": motifs/spring.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/summer.png": motifs/summer.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/autumn.png": motifs/autumn.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/halloween.png": motifs/halloween.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/winter.png": motifs/winter.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/birthday.png": motifs/birthday.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/travel.png": motifs/travel.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/retirement.png": motifs/retirement.png
+  "https://raw.githubusercontent.com/hflocki/tessera-countdown/1.3.1/motifs/camper.png": motifs/camper.png

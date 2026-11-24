@@ -47,7 +47,7 @@
     "event_date": "Eigenes Datum",
     "event_entity": "Kalender oder Entität",
     "date": "Datum",
-    "date_hint": "Für Eigenes Datum: 24.12. oder 05-01 jedes Jahr, 2027-05-01 oder 1.5.2027 einmal.",
+    "date_hint": "Für Eigenes Datum: 24.12. oder 05-01 jedes Jahr, 2027-05-01 oder 1.5.2027 einmal. Ein jährlicher 29.02. fällt in anderen Jahren auf den 1. März.",
     "entity": "Kalender oder Entität",
     "entity_hint": "Für Kalender oder Entität: der nächste Termin eines Kalenders, ein input_datetime oder ein Zeitstempel-Sensor.",
     "what": "Name",

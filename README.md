@@ -46,9 +46,16 @@ For holidays the same with their first day, the **Name** `holidays`, and the pic
 - Boards without pictures (the CYD, the 3.5- and 4-inch Hosyond and Waveshare) show the number and the words alone.
 - The pictures are in `motifs/`, drawn by `motifs/draw.py`.
 
+## Tried on
+
+- A Guition JC8012P4A1 (10.1-inch, ESP32-P4) with Tessera 0.62: all three arrangements with their pictures. It is
+  the only board it ran on.
+- Other boards only on the bench (tools/preview.py): there the CYD shows the number and its words without the picture,
+  and the Guition 4-inch and the Waveshare 4.3-inch upright show it as on the 10.1-inch.
+
 ## Privacy
 
-With a picture shown, the Tessera app in Home Assistant fetches it from this repository on GitHub
+With a picture shown, the Tessera app in Home Assistant fetches it from this repository's release on GitHub
 (`raw.githubusercontent.com`) and sends it to the screen; GitHub sees the address of your Home Assistant, as any visitor.
 Nothing else leaves your home: the dates are counted on the screen, and a calendar or entity is read from Home Assistant.
 
